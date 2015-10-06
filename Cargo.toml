@@ -1,0 +1,5 @@
+[package]
+name = "num-traits"
+version = "0.1.0"
+authors = ["photino <panzan89@gmail.com>"]
+
