@@ -2,10 +2,8 @@
 use std::{f32, f64};
 use std::ops::Neg;
 
-use ::Num;
-
 /// Signed numbers.
-pub trait Signed: Num + Neg<Output = Self> {
+pub trait Signed: Sized + Neg<Output = Self> {
     /// Computes the absolute value.
     ///
     /// For `f32` and `f64`, `NaN` will be returned if the number is `NaN`.

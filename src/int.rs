@@ -1,13 +1,22 @@
 
-use std::ops::{Not, BitAnd, BitOr, BitXor, Shl, Shr};
+use std::ops::{Add, Sub, Mul, Div, Rem, Not, BitAnd, BitOr, BitXor, Shl, Shr};
 use std::num::ParseIntError;
 
-use ::Num;
+use ::{Zero, One};
 
 /// Signed and unsigned integers.
-pub trait Int: Num + Not<Output = Self> + BitAnd<Output = Self> + BitOr<Output = Self> +
+pub trait Int: Copy + Clone + PartialOrd + PartialEq +
+               Zero + One + Add<Output = Self> + Sub<Output = Self> +
+               Mul<Output = Self> + Div<Output = Self> + Rem<Output = Self> +
+               Not<Output = Self> + BitAnd<Output = Self> + BitOr<Output = Self> +
                BitXor<Output = Self> + Shl<usize, Output = Self> + Shr<usize, Output = Self>
 {
+    /// Returns the smallest value that can be represented by this numeric type.
+    fn min_value() -> Self;
+
+    /// Returns the largest value that can be represented by this numeric type.
+    fn max_value() -> Self;
+
     /// Converts a string slice in a given base to an integer.
     fn from_str_radix(src: &str, radix: u32) -> Result<Self, ParseIntError>;
 
@@ -112,6 +121,14 @@ macro_rules! impl_int {
     ($($t:ty)*) => {
         $(
             impl Int for $t {
+                fn min_value() -> Self {
+                    <$t>::min_value()
+                }
+
+                fn max_value() -> Self {
+                    <$t>::max_value()
+                }
+
                 fn from_str_radix(src: &str, radix: u32) -> Result<Self, ParseIntError> {
                     <$t>::from_str_radix(src, radix)
                 }

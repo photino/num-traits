@@ -1,11 +1,14 @@
 
 use std::{f32, f64};
 use std::num::FpCategory;
+use std::ops::{Add, Sub, Mul, Div, Rem};
 
-use ::Signed;
+use ::{Zero, One, Signed};
 
 /// Float numbers.
-pub trait Float: Signed
+pub trait Float: Copy + Clone + PartialOrd + PartialEq +
+               Zero + One + Signed + Add<Output = Self> + Sub<Output = Self> +
+               Mul<Output = Self> + Div<Output = Self> + Rem<Output = Self>
 {
     /// Returns the `NaN` value.
     fn nan() -> Self;
@@ -19,8 +22,14 @@ pub trait Float: Signed
     /// Returns `-0.0`.
     fn neg_zero() -> Self;
 
+    /// Returns the smallest value that can be represented by this numeric type.
+    fn min_value() -> Self;
+
     /// Returns the smallest positive, normalized value that this type can represent.
     fn min_positive_value() -> Self;
+
+    /// Returns the largest value that can be represented by this numeric type.
+    fn max_value() -> Self;
 
     /// Returns `true` if this value is `NaN` and false otherwise.
     fn is_nan(self) -> bool;
@@ -193,8 +202,16 @@ macro_rules! impl_float {
                 -0.0
             }
 
+            fn min_value() -> Self {
+                $t::MIN
+            }
+
             fn min_positive_value() -> Self {
                 $t::MIN_POSITIVE
+            }
+
+            fn max_value() -> Self {
+                $t::MAX
             }
 
             fn is_nan(self) -> bool {

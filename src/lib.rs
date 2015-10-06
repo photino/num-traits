@@ -1,7 +1,5 @@
 //! Numeric traits for generic mathematics.
 
-use std::ops::{Add, Sub, Mul, Div, Rem};
-use std::{f32, f64};
 use std::mem::size_of;
 
 /// Reexports.
@@ -67,82 +65,34 @@ macro_rules! impl_zero_one_float {
 
 impl_zero_one_float!(f32 f64);
 
-/// Base trait for numeric types.
-pub trait Num: Copy + Clone + PartialOrd + PartialEq +
-               Zero + One + Add<Output = Self> + Sub<Output = Self> +
-               Mul<Output = Self> + Div<Output = Self> + Rem<Output = Self>
-{
-    /// Returns the smallest value that can be represented by this numeric type.
-    fn min_value() -> Self;
-
-    /// Returns the largest value that can be represented by this numeric type.
-    fn max_value() -> Self;
-}
-
-macro_rules! impl_num_int {
-    ($($t:ty)*) => {
-        $(
-            impl Num for $t {
-                fn min_value() -> Self {
-                    <$t>::min_value()
-                }
-
-                fn max_value() -> Self {
-                    <$t>::max_value()
-                }
-            }
-        )*
-    }
-}
-
-impl_num_int!(i8 i16 i32 i64 isize u8 u16 u32 u64 usize);
-
-macro_rules! impl_num_float {
-    ($($t:ident)*) => {
-        $(
-            impl Num for $t {
-                fn min_value() -> Self {
-                    $t::MIN
-                }
-
-                fn max_value() -> Self {
-                    $t::MAX
-                }
-            }
-        )*
-    }
-}
-
-impl_num_float!(f32 f64);
-
 /// An interface for casting values.
-pub trait Cast<T>: Sized {
-    /// Casts from type `T` to `Self`.
-    fn cast_from(T) -> Option<Self>;
+pub trait Cast<T> {
+    /// Casts from `Self` to type `T`.
+    fn cast(self) -> Option<T>;
 }
 
 macro_rules! impl_cast_same_type {
     ($T:ty) => {
         impl Cast<$T> for $T {
-            fn cast_from(x: $T) -> Option<$T> {
-                Some(x)
+            fn cast(self) -> Option<$T> {
+                Some(self)
             }
         }
     }
 }
 
 macro_rules! impl_cast_int_to_int {
-    ($Src:ty, $Dst:ty) => {
-        impl Cast<$Src> for $Dst {
-            fn cast_from(x: $Src) -> Option<$Dst> {
-                if size_of::<$Src>() <= size_of::<$Dst>() {
-                    Some(x as $Dst)
+    ($S:ty, $T:ty) => {
+        impl Cast<$T> for $S {
+            fn cast(self) -> Option<$T> {
+                if size_of::<$S>() <= size_of::<$T>() {
+                    Some(self as $T)
                 } else {
-                    let n = x as i64;
-                    let min_value = <$Dst>::min_value();
-                    let max_value = <$Dst>::max_value();
+                    let n = self as i64;
+                    let min_value = <$T>::min_value();
+                    let max_value = <$T>::max_value();
                     if min_value as i64 <= n && n <= max_value as i64 {
-                        Some(x as $Dst)
+                        Some(self as $T)
                     } else {
                         None
                     }
@@ -153,13 +103,13 @@ macro_rules! impl_cast_int_to_int {
 }
 
 macro_rules! impl_cast_int_to_uint {
-    ($Src:ty, $Dst:ty) => {
-        impl Cast<$Src> for $Dst {
-            fn cast_from(x: $Src) -> Option<$Dst> {
-                let zero = <$Src>::zero();
-                let max_value = <$Dst>::max_value();
-                if zero <= x && x as u64 <= max_value as u64 {
-                    Some(x as $Dst)
+    ($S:ty, $T:ty) => {
+        impl Cast<$T> for $S {
+            fn cast(self) -> Option<$T> {
+                let zero = <$S>::zero();
+                let max_value = <$T>::max_value();
+                if zero <= self && self as u64 <= max_value as u64 {
+                    Some(self as $T)
                 } else {
                     None
                 }
@@ -169,22 +119,22 @@ macro_rules! impl_cast_int_to_uint {
 }
 
 macro_rules! impl_cast_int_to_float {
-    ($Src:ty, $Dst:ty) => {
-        impl Cast<$Src> for $Dst {
-            fn cast_from(x: $Src) -> Option<$Dst> {
-                Some(x as $Dst)
+    ($S:ty, $T:ty) => {
+        impl Cast<$T> for $S {
+            fn cast(self) -> Option<$T> {
+                Some(self as $T)
             }
         }
     }
 }
 
 macro_rules! impl_cast_uint_to_int {
-    ($Src:ty, $Dst:ty) => {
-        impl Cast<$Src> for $Dst {
-            fn cast_from(x: $Src) -> Option<$Dst> {
-                let max_value = <$Dst>::max_value();
-                if x as u64 <= max_value as u64 {
-                    Some(x as $Dst)
+    ($S:ty, $T:ty) => {
+        impl Cast<$T> for $S {
+            fn cast(self) -> Option<$T> {
+                let max_value = <$T>::max_value();
+                if self as u64 <= max_value as u64 {
+                    Some(self as $T)
                 } else {
                     None
                 }
@@ -195,16 +145,16 @@ macro_rules! impl_cast_uint_to_int {
 }
 
 macro_rules! impl_cast_uint_to_uint {
-    ($Src:ty, $Dst:ty) => {
-        impl Cast<$Src> for $Dst {
-            fn cast_from(x: $Src) -> Option<$Dst> {
-                if size_of::<$Src>() <= size_of::<$Dst>() {
-                    Some(x as $Dst)
+    ($S:ty, $T:ty) => {
+        impl Cast<$T> for $S {
+            fn cast(self) -> Option<$T> {
+                if size_of::<$S>() <= size_of::<$T>() {
+                    Some(self as $T)
                 } else {
-                    let zero = <$Src>::zero();
-                    let max_value = <$Dst>::max_value();
-                    if zero <= x && x as u64 <= max_value as u64 {
-                        Some(x as $Dst)
+                    let zero = <$S>::zero();
+                    let max_value = <$T>::max_value();
+                    if zero <= self && self as u64 <= max_value as u64 {
+                        Some(self as $T)
                     } else {
                         None
                     }
@@ -215,13 +165,13 @@ macro_rules! impl_cast_uint_to_uint {
 }
 
 macro_rules! impl_cast_float_to_int {
-    ($Src:ty, $Dst:ty) => {
-        impl Cast<$Src> for $Dst {
-            fn cast_from(x: $Src) -> Option<$Dst> {
-                let min_value = <$Dst>::min_value();
-                let max_value = <$Dst>::max_value();
-                if min_value as $Src <= x && x <= max_value as $Src {
-                    Some(x as $Dst)
+    ($S:ty, $T:ty) => {
+        impl Cast<$T> for $S {
+            fn cast(self) -> Option<$T> {
+                let min_value = <$T>::min_value();
+                let max_value = <$T>::max_value();
+                if min_value as $S <= self && self <= max_value as $S {
+                    Some(self as $T)
                 } else {
                     None
                 }
@@ -231,13 +181,13 @@ macro_rules! impl_cast_float_to_int {
 }
 
 macro_rules! impl_cast_float_to_uint {
-    ($Src:ty, $Dst:ty) => {
-        impl Cast<$Src> for $Dst {
-            fn cast_from(x: $Src) -> Option<$Dst> {
-                let zero = <$Src>::zero();
-                let max_value = <$Dst>::max_value();
-                if zero <= x && x <= max_value as $Src {
-                    Some(x as $Dst)
+    ($S:ty, $T:ty) => {
+        impl Cast<$T> for $S {
+            fn cast(self) -> Option<$T> {
+                let zero = <$S>::zero();
+                let max_value = <$T>::max_value();
+                if zero <= self && self <= max_value as $S {
+                    Some(self as $T)
                 } else {
                     None
                 }
@@ -247,16 +197,16 @@ macro_rules! impl_cast_float_to_uint {
 }
 
 macro_rules! impl_cast_float_to_float {
-    ($Src:ty, $Dst:ty) => {
-        impl Cast<$Src> for $Dst {
-            fn cast_from(x: $Src) -> Option<$Dst> {
-                if size_of::<$Src>() <= size_of::<$Dst>() {
-                    Some(x as $Dst)
+    ($S:ty, $T:ty) => {
+        impl Cast<$T> for $S {
+            fn cast(self) -> Option<$T> {
+                if size_of::<$S>() <= size_of::<$T>() {
+                    Some(self as $T)
                 } else {
-                    let n = x as f64;
-                    let max_value = <$Src>::max_value();
-                    if -max_value as f64 <= n && n <= max_value as f64 {
-                        Some(x as $Dst)
+                    let x = self as f64;
+                    let max_value = <$S>::max_value();
+                    if -max_value as f64 <= x && x <= max_value as f64 {
+                        Some(self as $T)
                     } else {
                         None
                     }
@@ -425,7 +375,8 @@ impl_cast_same_type!(f64);
 #[test]
 fn test_cast() {
     let a = 32i32;
-    let b = f32::cast_from(a).unwrap();
+    let b: f32 = a.cast().unwrap();
+    let c: Option<i32> = 1.0e+123f64.cast();
     assert_eq!(b, 32.0f32);
-    assert_eq!(i32::cast_from(1.0e+123f64), None);
+    assert_eq!(c, None);
 }
