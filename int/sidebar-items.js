@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["Int","Signed and unsigned integers."],["UnsignedInt","Unsigned integers."]]});
