@@ -66,15 +66,15 @@ macro_rules! impl_zero_one_float {
 impl_zero_one_float!(f32 f64);
 
 /// An interface for casting values.
-pub trait Cast<T> {
-    /// Casts from `Self` to type `T`.
-    fn cast(self) -> Option<T>;
+pub trait CastInto<T> {
+    /// Casts `self` into the type `T`.
+    fn cast_into(self) -> Option<T>;
 }
 
 macro_rules! impl_cast_same_type {
     ($T:ty) => {
-        impl Cast<$T> for $T {
-            fn cast(self) -> Option<$T> {
+        impl CastInto<$T> for $T {
+            fn cast_into(self) -> Option<$T> {
                 Some(self)
             }
         }
@@ -83,8 +83,8 @@ macro_rules! impl_cast_same_type {
 
 macro_rules! impl_cast_int_to_int {
     ($S:ty, $T:ty) => {
-        impl Cast<$T> for $S {
-            fn cast(self) -> Option<$T> {
+        impl CastInto<$T> for $S {
+            fn cast_into(self) -> Option<$T> {
                 if size_of::<$S>() <= size_of::<$T>() {
                     Some(self as $T)
                 } else {
@@ -104,8 +104,8 @@ macro_rules! impl_cast_int_to_int {
 
 macro_rules! impl_cast_int_to_uint {
     ($S:ty, $T:ty) => {
-        impl Cast<$T> for $S {
-            fn cast(self) -> Option<$T> {
+        impl CastInto<$T> for $S {
+            fn cast_into(self) -> Option<$T> {
                 let zero = <$S>::zero();
                 let max_value = <$T>::max_value();
                 if zero <= self && self as u64 <= max_value as u64 {
@@ -120,8 +120,8 @@ macro_rules! impl_cast_int_to_uint {
 
 macro_rules! impl_cast_int_to_float {
     ($S:ty, $T:ty) => {
-        impl Cast<$T> for $S {
-            fn cast(self) -> Option<$T> {
+        impl CastInto<$T> for $S {
+            fn cast_into(self) -> Option<$T> {
                 Some(self as $T)
             }
         }
@@ -130,8 +130,8 @@ macro_rules! impl_cast_int_to_float {
 
 macro_rules! impl_cast_uint_to_int {
     ($S:ty, $T:ty) => {
-        impl Cast<$T> for $S {
-            fn cast(self) -> Option<$T> {
+        impl CastInto<$T> for $S {
+            fn cast_into(self) -> Option<$T> {
                 let max_value = <$T>::max_value();
                 if self as u64 <= max_value as u64 {
                     Some(self as $T)
@@ -146,8 +146,8 @@ macro_rules! impl_cast_uint_to_int {
 
 macro_rules! impl_cast_uint_to_uint {
     ($S:ty, $T:ty) => {
-        impl Cast<$T> for $S {
-            fn cast(self) -> Option<$T> {
+        impl CastInto<$T> for $S {
+            fn cast_into(self) -> Option<$T> {
                 if size_of::<$S>() <= size_of::<$T>() {
                     Some(self as $T)
                 } else {
@@ -166,8 +166,8 @@ macro_rules! impl_cast_uint_to_uint {
 
 macro_rules! impl_cast_float_to_int {
     ($S:ty, $T:ty) => {
-        impl Cast<$T> for $S {
-            fn cast(self) -> Option<$T> {
+        impl CastInto<$T> for $S {
+            fn cast_into(self) -> Option<$T> {
                 let min_value = <$T>::min_value();
                 let max_value = <$T>::max_value();
                 if min_value as $S <= self && self <= max_value as $S {
@@ -182,8 +182,8 @@ macro_rules! impl_cast_float_to_int {
 
 macro_rules! impl_cast_float_to_uint {
     ($S:ty, $T:ty) => {
-        impl Cast<$T> for $S {
-            fn cast(self) -> Option<$T> {
+        impl CastInto<$T> for $S {
+            fn cast_into(self) -> Option<$T> {
                 let zero = <$S>::zero();
                 let max_value = <$T>::max_value();
                 if zero <= self && self <= max_value as $S {
@@ -198,8 +198,8 @@ macro_rules! impl_cast_float_to_uint {
 
 macro_rules! impl_cast_float_to_float {
     ($S:ty, $T:ty) => {
-        impl Cast<$T> for $S {
-            fn cast(self) -> Option<$T> {
+        impl CastInto<$T> for $S {
+            fn cast_into(self) -> Option<$T> {
                 if size_of::<$S>() <= size_of::<$T>() {
                     Some(self as $T)
                 } else {
@@ -373,10 +373,10 @@ impl_cast_float_to_float!(f64, f32);
 impl_cast_same_type!(f64);
 
 #[test]
-fn test_cast() {
+fn test_cast_into() {
     let a = 32i32;
-    let b: f32 = a.cast().unwrap();
-    let c: Option<i32> = 1.0e+123f64.cast();
+    let b: f32 = a.cast_into().unwrap();
+    let c: Option<i32> = 1.0e+123f64.cast_into();
     assert_eq!(b, 32.0f32);
     assert_eq!(c, None);
 }
