@@ -65,17 +65,31 @@ macro_rules! impl_zero_one_float {
 
 impl_zero_one_float!(f32 f64);
 
-/// An interface for casting values.
+/// Constructs `Self` from the other type via a conversion.
+pub trait CastFrom<T>: Sized {
+    /// Constructs `Self` from the type `T`.
+    fn cast_from(x: T) -> Option<Self>;
+}
+
+/// Converts `Self` into the other type.
 pub trait CastInto<T> {
-    /// Casts `self` into the type `T`.
+    /// Casts `Self` into the type `T`.
     fn cast_into(self) -> Option<T>;
+}
+
+impl<S, T> CastInto<T> for S
+    where T: CastFrom<S>
+{
+    fn cast_into(self) -> Option<T> {
+        <T>::cast_from(self)
+    }
 }
 
 macro_rules! impl_cast_same_type {
     ($T:ty) => {
-        impl CastInto<$T> for $T {
-            fn cast_into(self) -> Option<$T> {
-                Some(self)
+        impl CastFrom<$T> for $T {
+            fn cast_from(x: $T) -> Option<$T> {
+                Some(x)
             }
         }
     }
@@ -83,16 +97,16 @@ macro_rules! impl_cast_same_type {
 
 macro_rules! impl_cast_int_to_int {
     ($S:ty, $T:ty) => {
-        impl CastInto<$T> for $S {
-            fn cast_into(self) -> Option<$T> {
+        impl CastFrom<$S> for $T {
+            fn cast_from(x: $S) -> Option<$T> {
                 if size_of::<$S>() <= size_of::<$T>() {
-                    Some(self as $T)
+                    Some(x as $T)
                 } else {
-                    let n = self as i64;
+                    let n = x as i64;
                     let min_value = <$T>::min_value();
                     let max_value = <$T>::max_value();
                     if min_value as i64 <= n && n <= max_value as i64 {
-                        Some(self as $T)
+                        Some(x as $T)
                     } else {
                         None
                     }
@@ -104,12 +118,12 @@ macro_rules! impl_cast_int_to_int {
 
 macro_rules! impl_cast_int_to_uint {
     ($S:ty, $T:ty) => {
-        impl CastInto<$T> for $S {
-            fn cast_into(self) -> Option<$T> {
+        impl CastFrom<$S> for $T {
+            fn cast_from(x: $S) -> Option<$T> {
                 let zero = <$S>::zero();
                 let max_value = <$T>::max_value();
-                if zero <= self && self as u64 <= max_value as u64 {
-                    Some(self as $T)
+                if zero <= x && x as u64 <= max_value as u64 {
+                    Some(x as $T)
                 } else {
                     None
                 }
@@ -120,9 +134,9 @@ macro_rules! impl_cast_int_to_uint {
 
 macro_rules! impl_cast_int_to_float {
     ($S:ty, $T:ty) => {
-        impl CastInto<$T> for $S {
-            fn cast_into(self) -> Option<$T> {
-                Some(self as $T)
+        impl CastFrom<$S> for $T {
+            fn cast_from(x: $S) -> Option<$T> {
+                Some(x as $T)
             }
         }
     }
@@ -130,11 +144,11 @@ macro_rules! impl_cast_int_to_float {
 
 macro_rules! impl_cast_uint_to_int {
     ($S:ty, $T:ty) => {
-        impl CastInto<$T> for $S {
-            fn cast_into(self) -> Option<$T> {
+        impl CastFrom<$S> for $T {
+            fn cast_from(x: $S) -> Option<$T> {
                 let max_value = <$T>::max_value();
-                if self as u64 <= max_value as u64 {
-                    Some(self as $T)
+                if x as u64 <= max_value as u64 {
+                    Some(x as $T)
                 } else {
                     None
                 }
@@ -146,15 +160,15 @@ macro_rules! impl_cast_uint_to_int {
 
 macro_rules! impl_cast_uint_to_uint {
     ($S:ty, $T:ty) => {
-        impl CastInto<$T> for $S {
-            fn cast_into(self) -> Option<$T> {
+        impl CastFrom<$S> for $T {
+            fn cast_from(x: $S) -> Option<$T> {
                 if size_of::<$S>() <= size_of::<$T>() {
-                    Some(self as $T)
+                    Some(x as $T)
                 } else {
                     let zero = <$S>::zero();
                     let max_value = <$T>::max_value();
-                    if zero <= self && self as u64 <= max_value as u64 {
-                        Some(self as $T)
+                    if zero <= x && x as u64 <= max_value as u64 {
+                        Some(x as $T)
                     } else {
                         None
                     }
@@ -166,12 +180,12 @@ macro_rules! impl_cast_uint_to_uint {
 
 macro_rules! impl_cast_float_to_int {
     ($S:ty, $T:ty) => {
-        impl CastInto<$T> for $S {
-            fn cast_into(self) -> Option<$T> {
+        impl CastFrom<$S> for $T {
+            fn cast_from(x: $S) -> Option<$T> {
                 let min_value = <$T>::min_value();
                 let max_value = <$T>::max_value();
-                if min_value as $S <= self && self <= max_value as $S {
-                    Some(self as $T)
+                if min_value as $S <= x && x <= max_value as $S {
+                    Some(x as $T)
                 } else {
                     None
                 }
@@ -182,12 +196,12 @@ macro_rules! impl_cast_float_to_int {
 
 macro_rules! impl_cast_float_to_uint {
     ($S:ty, $T:ty) => {
-        impl CastInto<$T> for $S {
-            fn cast_into(self) -> Option<$T> {
+        impl CastFrom<$S> for $T {
+            fn cast_from(x: $S) -> Option<$T> {
                 let zero = <$S>::zero();
                 let max_value = <$T>::max_value();
-                if zero <= self && self <= max_value as $S {
-                    Some(self as $T)
+                if zero <= x && x <= max_value as $S {
+                    Some(x as $T)
                 } else {
                     None
                 }
@@ -198,15 +212,15 @@ macro_rules! impl_cast_float_to_uint {
 
 macro_rules! impl_cast_float_to_float {
     ($S:ty, $T:ty) => {
-        impl CastInto<$T> for $S {
-            fn cast_into(self) -> Option<$T> {
+        impl CastFrom<$S> for $T {
+            fn cast_from(x: $S) -> Option<$T> {
                 if size_of::<$S>() <= size_of::<$T>() {
-                    Some(self as $T)
+                    Some(x as $T)
                 } else {
-                    let x = self as f64;
+                    let y = x as f64;
                     let max_value = <$S>::max_value();
-                    if -max_value as f64 <= x && x <= max_value as f64 {
-                        Some(self as $T)
+                    if -max_value as f64 <= y && y <= max_value as f64 {
+                        Some(x as $T)
                     } else {
                         None
                     }
@@ -373,9 +387,9 @@ impl_cast_float_to_float!(f64, f32);
 impl_cast_same_type!(f64);
 
 #[test]
-fn test_cast_into() {
+fn test_cast() {
     let a = 32i32;
-    let b: f32 = a.cast_into().unwrap();
+    let b = f32::cast_from(a).unwrap();
     let c: Option<i32> = 1.0e+123f64.cast_into();
     assert_eq!(b, 32.0f32);
     assert_eq!(c, None);
